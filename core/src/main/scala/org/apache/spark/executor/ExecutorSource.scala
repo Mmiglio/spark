@@ -94,6 +94,20 @@ class ExecutorSource(threadPool: ThreadPoolExecutor, executorId: String) extends
     }
   })
 
+  // Get the metrics for the kafka consumer
+  metricRegistry.register(MetricRegistry.name("recordLagsMax"), new Gauge[Double] {
+    val mBean: MBeanServer = ManagementFactory.getPlatformMBeanServer
+    val name = new ObjectName("kafka.consumer:type=consumer-fetch-manager-metrics,client-id=consumer-1")
+    override def getValue: Double = {
+      try {
+        // return records-lag-max for consumer 1
+        mBean.getAttribute(name, "records-lag-max").asInstanceOf[Double]
+      } catch {
+        case NonFatal(_) => -1.0
+      }
+    }
+  })
+
   // Expose executor task metrics using the Dropwizard metrics system.
   // The list is taken from TaskMetrics.scala
   val METRIC_CPU_TIME = metricRegistry.counter(MetricRegistry.name("cpuTime"))
